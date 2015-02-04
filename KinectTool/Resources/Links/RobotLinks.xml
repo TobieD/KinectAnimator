@@ -1,0 +1,83 @@
+﻿<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<Links>
+  <Link>
+    <KinectJoint>HipCenter</KinectJoint>
+    <MeshJoint>Hip_Center</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>Spine</KinectJoint>
+    <MeshJoint>Spine</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>ShoulderCenter</KinectJoint>
+    <MeshJoint>Neck</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>Head</KinectJoint>
+    <MeshJoint>Head</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>ShoulderLeft</KinectJoint>
+    <MeshJoint>Shoulder_Left</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>ElbowLeft</KinectJoint>
+    <MeshJoint>Elbow_Left</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>WristLeft</KinectJoint>
+    <MeshJoint>Not Set</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>HandLeft</KinectJoint>
+    <MeshJoint>Not Set</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>ShoulderRight</KinectJoint>
+    <MeshJoint>Shoulder_Right</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>ElbowRight</KinectJoint>
+    <MeshJoint>Elbow_Right</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>WristRight</KinectJoint>
+    <MeshJoint>Not Set</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>HandRight</KinectJoint>
+    <MeshJoint>Not Set</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>HipLeft</KinectJoint>
+    <MeshJoint>Thigh_Left</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>KneeLeft</KinectJoint>
+    <MeshJoint>Knee_Left</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>AnkleLeft</KinectJoint>
+    <MeshJoint>Not Set</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>FootLeft</KinectJoint>
+    <MeshJoint>Not Set</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>HipRight</KinectJoint>
+    <MeshJoint>Thigh_Right</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>KneeRight</KinectJoint>
+    <MeshJoint>Knee_Right</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>AnkleRight</KinectJoint>
+    <MeshJoint>Not Set</MeshJoint>
+  </Link>
+  <Link>
+    <KinectJoint>FootRight</KinectJoint>
+    <MeshJoint>Not Set</MeshJoint>
+  </Link>
+</Links>

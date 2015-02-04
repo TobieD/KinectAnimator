@@ -1,0 +1,96 @@
+﻿<Window x:Class="KinectTool.View.RecordingConvertorView"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="RecordingConvertor" Height="400" Width="350"
+    DataContext="{Binding Source={StaticResource Locator}}" MaxWidth="400" MaxHeight="400">
+
+    <!-- KeyBindings -->
+    <Window.InputBindings>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding Main.UndoCommand}"/>
+        <KeyBinding Key="X" Modifiers="Control" Command="{Binding Main.RedoCommand}"/>
+        <KeyBinding Key="Enter" Command="{Binding RecordingConvertor.SetJointCommand}"  CommandParameter="{Binding ElementName=SelectionBox, Path= SelectedItem}"/>
+    </Window.InputBindings>
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="35*"/>
+        </Grid.RowDefinitions>
+        <DockPanel Grid.RowSpan="2">
+            <Menu DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="0,0,0,1">
+                <!-- Open new or save current -->
+                <MenuItem Header="File">
+                    <MenuItem Header="Export" Command="{Binding RecordingConvertor.SaveToXmlCommand}" />
+                    <MenuItem Header="Import" Command="{Binding RecordingConvertor.LoadXmlCommand}" />
+                </MenuItem>
+            </Menu>
+        </DockPanel>
+
+        <TabControl Grid.Row="1" Grid.RowSpan="2">
+            <TabItem Header="General">
+                <StackPanel Orientation="Horizontal">
+                    <StackPanel Orientation="Vertical">
+                        <Label Content="Animation Name"  Height="26" Margin="5"/>
+                        <Label Content="Duration (in frames)" Height="26" Margin="5"/>
+                        <Label Content="Ticks per second" Height="26" Margin="5"/>
+                        <Label Content="Interval" Height="26" Margin="5"/>
+                    </StackPanel>
+                    <StackPanel Orientation="Vertical" MinWidth="150">
+                        <TextBox Text="{Binding RecordingConvertor.Clip.Name, UpdateSourceTrigger=PropertyChanged}" 
+                                 Height="26" Margin="5"/>
+                        <TextBox Text="{Binding RecordingConvertor.Clip.Duration ,UpdateSourceTrigger=PropertyChanged}" 
+                                 Height="26" Margin="5" />
+                        <TextBox Text="{Binding RecordingConvertor.Clip.TicksPerSecond ,UpdateSourceTrigger=PropertyChanged}" 
+                                 Height="26" Margin="5"/>
+                        <TextBox Text="{Binding RecordingConvertor.FrameInterval, UpdateSourceTrigger=PropertyChanged}" 
+                                 Height="26" Margin="5"/>
+                        <Button Command="{Binding RecordingConvertor.ApplyChangesCommmand}"
+                                CommandParameter="{Binding RelativeSource={RelativeSource AncestorType=Window}}"
+                                Content="Ok" Height="26" Margin="5"/>
+                    </StackPanel>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Joints">
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="135"/>
+                        <ColumnDefinition/>
+                    </Grid.ColumnDefinitions>
+
+                    <ListBox x:Name="LbType" SelectedValue="{Binding RecordingConvertor.SelectedType}" 
+                             ItemsSource="{Binding RecordingConvertor.LinkedJoints}" Grid.Column="0"
+                             MinWidth="100" SelectedValuePath="Key" DisplayMemberPath="Key" Margin="5" />
+
+                    <Grid Grid.Column="1">
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="100"/>
+                            <ColumnDefinition Width="100"/>
+                        </Grid.ColumnDefinitions>
+                        <!-- Value to be set -->
+
+                        <Label Content="{Binding RecordingConvertor.SelectedType}" Margin="5,5,0,0"
+                    	    Height="26" VerticalAlignment="Top" />
+
+                        <Label Grid.Column="1" Content="{Binding RecordingConvertor.SelectedJoint}" Margin="5,5,0,0"
+                                   Height="26" VerticalAlignment="Top" />
+                        
+                        <!--<Label Grid.Column="0" Content="Is Root" VerticalAlignment="Top" Grid.ColumnSpan="2" Margin="5,35,100,5"/>
+                        <CheckBox Grid.Column="1" VerticalAlignment="Top" Margin="5,45,5,0" UseLayoutRounding="False"/>-->
+
+                        <ComboBox Grid.Column="0" x:Name="SelectionBox"  SelectedIndex="0"  Margin="5,36,10,0" 
+                                      ItemsSource="{Binding RecordingConvertor.MeshJoints.Values}" VerticalAlignment="Top" Grid.ColumnSpan="2"/>
+
+                        <Button Grid.Column="1" DockPanel.Dock="Top" Content="Ok" 
+                                    Command="{Binding RecordingConvertor.SetJointCommand}" 
+                                    CommandParameter="{Binding ElementName=SelectionBox, Path= SelectedItem}"
+                                    VerticalAlignment="Top" Margin="0,63,15,0" HorizontalAlignment="Right" Width="80"/>
+                    </Grid>
+                </Grid>
+
+
+            </TabItem>
+        </TabControl>
+
+
+    </Grid>
+</Window>

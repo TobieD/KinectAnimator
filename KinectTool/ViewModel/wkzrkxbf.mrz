@@ -1,0 +1,418 @@
+﻿using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
+using System.Threading;
+using System.Windows;
+using System.Windows.Media;
+using GalaSoft.MvvmLight;
+using GalaSoft.MvvmLight.Command;
+using KinectTool.Debugger;
+using KinectTool.Helpers;
+using KinectTool.Model.Kinect;
+using KinectTool.SharpDx;
+using KinectTool.SharpDx.Importers;
+using KinectTool.SharpDx.Mesh;
+using KinectTool.Visual;
+using Microsoft.Win32;
+
+namespace KinectTool.ViewModel
+{
+    public class KinectEmulateViewModel : ViewModelBase
+    {
+        /* COMMANDS */
+
+        /// <summary>
+        /// Load a 3D Model
+        /// </summary>
+        private RelayCommand _loadModelCommand;
+
+        public RelayCommand LoadModelCommand
+        {
+            get { return (_loadModelCommand ?? (_loadModelCommand = new RelayCommand(LoadModel))); }
+        }
+
+        /// <summary>
+        /// Open a new Recording
+        /// </summary>
+        private RelayCommand _openRecordingCommand;
+
+        public RelayCommand OpenRecordingCommand
+        {
+            get { return (_openRecordingCommand ?? (_openRecordingCommand = new RelayCommand(LoadRecording))); }
+        }
+
+        /// <summary>
+        /// Save a Recording
+        /// </summary>
+        private RelayCommand _saveRecordingCommand;
+
+        public RelayCommand SaveRecordingCommand
+        {
+            get { return (_saveRecordingCommand ?? 
+                (_saveRecordingCommand = new RelayCommand(SaveRecording))); }
+        }
+
+        /// <summary>
+        /// start playing the recording from frame 0
+        /// </summary>
+        private RelayCommand _startEmulationCommand;
+
+        public RelayCommand StartEmulationCommand
+        {
+            get
+            {
+                return (_startEmulationCommand ??
+                        (_startEmulationCommand = new RelayCommand(() => StartEmulation(false))));
+            }
+        }
+
+        /// <summary>
+        /// stop playing the recording and set to frame 0
+        /// </summary>
+        private RelayCommand _stopEmulationCommand;
+
+        public RelayCommand StopEmulationCommand
+        {
+            get
+            {
+                return (_stopEmulationCommand ?? 
+                    (_stopEmulationCommand = new RelayCommand(() => StopEmulation(true))));
+            }
+        }
+
+        /// <summary>
+        /// Resume playing the recording from last position
+        /// </summary>
+        private RelayCommand _resumeEmulationCommand;
+
+        public RelayCommand ResumeEmulationCommand
+        {
+            get
+            {
+                return (_resumeEmulationCommand ??
+                        (_resumeEmulationCommand = new RelayCommand(() => StopEmulation(false))));
+            }
+        }
+
+        /// <summary>
+        /// Pause the playing recording
+        /// </summary>
+        private RelayCommand _pauseEmulationCommand;
+
+        public RelayCommand PauseEmulationCommand
+        {
+            get
+            {
+                return (_pauseEmulationCommand ?? (_pauseEmulationCommand = new RelayCommand(() => StopEmulation(true))));
+            }
+        }
+
+        /* BINDINGS */
+
+        //Used for drawing
+        public DrawingImage Display { get; set; }
+
+        private Dx10Viewport _viewport;
+        public Dx10Viewport Viewport {
+            get { return _viewport; }
+            set
+            {
+                _viewport = value;
+                RaisePropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Is a recording loaded
+        /// </summary>
+        public bool IsLoaded { get; set; }
+
+        /// <summary>
+        /// Location of the current frame in the recording
+        /// </summary>
+        private int _currentIndex = 0;
+
+        public int CurrentFrameIndex
+        {
+            get
+            {
+                //Return index or reset to 0 when end is reached
+                return _currentIndex >= TotalFrames ? 0 : _currentIndex;
+            }
+            set
+            {
+                _currentIndex = value;
+                _onFrameIndexChange();
+                RaisePropertyChanged();
+            }
+        }
+
+        /// <summary>
+        /// Total frames in the recording
+        /// </summary>
+        public int TotalFrames
+        {
+            get { return _recording != null ? _recording.Frames : 0; }
+        }
+
+        /// <summary>
+        /// Is the Emulator playing a recording
+        /// </summary>
+        public bool IsEmulating { get; set; }
+
+        /// <summary>
+        /// Is the emulation paused
+        /// </summary>
+        public bool Paused { get; set; }
+
+        private bool _stopped;
+
+        //Actual recording
+        private string _currentFile;
+        //Current Open Recording
+        private KinectRecording _recording;
+
+        //Editing Frames
+        public EditorViewModel Editor;
+        
+        //Used for visualizing the frame
+        
+        private readonly FrameVisualizer _frameDrawer;
+        private readonly Action _onFrameIndexChange;
+
+
+        //Draw mode selection
+        private Dictionary<DrawMode, string> _drawModes = new Dictionary<DrawMode, string>()
+        {
+            {DrawMode.Visual2D, "2D"},
+            {DrawMode.Visual3D, "3D"},
+            //{DrawMode.None, "Hidden in UI"}
+        };
+                  
+        public Dictionary<DrawMode, string> DrawModes
+        {
+            get { return _drawModes; }
+        }
+        
+        public Visibility VisibleViewport3D {get; set;  }
+        public Visibility VisibleViewport2D { get; set; }
+
+
+        public DrawMode DrawMode
+        {
+            get { return _frameDrawer.DrawMode; }
+            set
+            {
+                _frameDrawer.DrawMode = value;
+                if (value == DrawMode.Visual2D)
+                {
+                    VisibleViewport2D = Visibility.Hidden;
+            }
+        }
+
+        public KinectEmulateViewModel()
+        {
+            //Create a drawinggroup for the image in the viewport
+            var dwGroup = new DrawingGroup();
+            Display = new DrawingImage(dwGroup);
+
+            //Create a viewPort for 3D
+            Viewport = new Dx10Viewport();
+
+            //Init Visualizer with the 
+            _frameDrawer = new FrameVisualizer(dwGroup, Viewport);
+            _frameDrawer.DrawMode = DrawMode.Visual2D;
+
+            //When Frame index is changed => Draw the new frame
+            _onFrameIndexChange += DrawFrame;
+
+            IsEmulating = false;
+            
+            #if DEBUG
+            //DeserializeRecordingFile("Recordings/BasicMovement.kr");
+            #endif
+        }
+
+        /// <summary>
+        /// Draw a frame of the current recording
+        /// </summary>
+        public void DrawFrame()
+        {
+            //Don't do anything if no recording
+            if (_recording == null)
+                return;
+
+            //get the current frame from the recording
+            var currFrame = _recording.GetFrame(CurrentFrameIndex);
+
+            //draw it
+            _frameDrawer.Draw(currFrame);
+           
+        }
+
+        private void LoadModel()
+        {
+
+            var filters = Importer.Types;
+            //Opens dialog for selecting the file
+            var dlg = new OpenFileDialog
+            {
+                FileName = "",
+                DefaultExt = ".FBX",
+                Filter = "Model file (" + filters +") | " + filters
+            };
+
+            
+            //Show the file open dialog
+            var result = dlg.ShowDialog();
+            if (result != true) return;
+
+            var model = new CustomMesh(dlg.FileName);
+            Viewport.AddMesh(model);
+
+        }
+
+        /// <summary>
+        /// Load a selected file
+        /// </summary>
+        public void LoadRecording()
+        {
+            //Opens dialog for selecting the file
+            var dlg = new OpenFileDialog
+            {
+                FileName = "",
+                DefaultExt = ".kr",
+                Filter = "Kinect Recordings (.kr)|*.kr"
+            };
+
+            //Show the file open dialog
+            var result = dlg.ShowDialog();
+            if (result != true) return;
+
+            DeserializeRecordingFile(dlg.FileName);
+        }
+
+        private void DeserializeRecordingFile(string filename)
+        {
+            //Load in the file
+            _currentFile = filename;
+
+            using (var file = new FileStream(_currentFile, FileMode.Open))
+            {
+                //Loads the serialized data
+                var bf = new BinaryFormatter();
+                _recording = bf.Deserialize(file) as KinectRecording;
+
+                //Debug for changing the data in KinectFrame
+                _recording.RecreateFrames();
+            }
+
+            Debug.Log(LogLevel.Info, String.Format("Succesfully loaded file: {0}", _recording.FileName));
+
+            var frames = TotalFrames;
+            IsLoaded = true;
+            CurrentFrameIndex = 0;
+
+            //Need to let WPF now the Recording got changed
+            RaisePropertyChanged("TotalFrames");
+            RaisePropertyChanged("IsLoaded");
+
+            if(Editor != null)
+                Editor.LoadRecording(_recording);
+            
+        }
+
+        //Save a recording
+        public void SaveRecording()
+        {
+            //open save dialog
+            var dlg = new SaveFileDialog()
+            {
+                FileName = "",
+                DefaultExt = ".kr",
+                Filter = "Kinect Recordings (.kr)|*.kr"
+            };
+
+            //Show the file open dialog
+            var result = dlg.ShowDialog();
+            if (result != true) return;
+
+            if (_recording == null)
+                return;
+
+            var filePath = dlg.FileName;
+
+            //Serialize data
+            using (var output = new FileStream(@filePath, FileMode.OpenOrCreate))
+            {
+                var bf = new BinaryFormatter();
+                bf.Serialize(output, _recording);
+            }
+        }
+
+        /* EMULATING THE FRAMES ON SEPERATE THREAD */
+        public void StartEmulation(bool resume)
+        {
+            //Don't play when already playing
+            if (IsEmulating)
+                return;
+
+            //don't reset to 0 if we press resume
+            if (!resume)
+                CurrentFrameIndex = 0;
+
+            IsEmulating = true;
+            var loopThread = new Thread(RunEmulation);
+
+            //Start from the current Frame Index
+            loopThread.Start(CurrentFrameIndex);
+            Paused = false;
+        }
+
+        public void StopEmulation(bool pause)
+        {
+            _stopped = !pause;
+            IsEmulating = false;
+            Paused = true;
+        }
+
+        //When passing through a variable to a new thread, it needs to be an object type
+        private void RunEmulation(object i)
+        {
+            //Convert object
+            var index = i is int ? (int) i : 0;
+            var sleepTime = 30;
+
+            while (index < TotalFrames)
+            {
+                if (!IsEmulating)
+                    break;
+
+                ++index;
+                //Set the index to the CurrentFrame of the UI thread
+
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    this.CurrentFrameIndex = index;
+                });
+
+                //Some delay or it will run too fast
+                Thread.Sleep(sleepTime);
+            }
+
+            if (_stopped)
+            {
+                //Doesn't stop instantly
+                //At the end of the Loop, set it back to the start
+                Application.Current.Dispatcher.Invoke(() =>
+                {
+                    this.CurrentFrameIndex = 0;
+                });
+
+            }
+
+            IsEmulating = false;
+        }
+    }
+}

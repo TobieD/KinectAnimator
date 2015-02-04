@@ -1,0 +1,181 @@
+﻿<UserControl x:Class="KinectTool.View.KinectEmulatorView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+             xmlns:convert="clr-namespace:KinectTool.Convertors"
+             xmlns:sharpWpf="clr-namespace:SharpWpf;assembly=SharpWpf"
+             mc:Ignorable="d" x:Name="Control" Width="640" Height="480" 
+            HorizontalAlignment="Left" VerticalAlignment="Top">
+
+    <!-- DataContext -->
+    <UserControl.DataContext>
+        <Binding Source="{StaticResource Locator}" />
+    </UserControl.DataContext>
+
+    <UserControl.Resources>
+        <convert:CollectionSizeToBool x:Key="SizeToBool"/>
+        <convert:BoolToVisibility x:Key="BoolToVisibility"/>
+        <convert:BoolInvertVisibility x:Key="BoolToVisibilityInvert"/>
+    </UserControl.Resources>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="150"/>
+        </Grid.RowDefinitions>
+
+        <!-- Viewport -->
+        <Grid>
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="1*"/>
+                <ColumnDefinition Width="1*"/>
+            </Grid.ColumnDefinitions>
+            <Rectangle Fill="#FF111111"/>
+            <Image Grid.Column="0" x:Name="RenderCanvas" Source="{Binding Emulator.Display}" Stretch="Fill"/>
+            <sharpWpf:DX10RenderCanvas Grid.Column="1" x:Name="Dx10RenderCanvas" Viewport="{Binding Emulator.Viewport}" Stretch="Fill" />
+        </Grid>
+
+        <!--Controls-->
+        <Grid Row="1">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="40"/>
+                <RowDefinition Height="100"/>
+            </Grid.RowDefinitions>
+
+            <!--Slider-->
+            <Slider  Value="{Binding Emulator.CurrentFrameIndex}" Maximum="{Binding Emulator.TotalFrames, Mode=OneWay}" 
+                     Margin="5" />
+
+            <!--BUTTONS -->
+            <Grid Row="1">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="210*"/>
+                    <ColumnDefinition Width="5*"/>
+                    <ColumnDefinition Width="210*"/>
+                    <ColumnDefinition Width="5*"/>
+                    <ColumnDefinition Width="210"/>
+                </Grid.ColumnDefinitions>
+
+                <!--Animation Selection -->
+                <GroupBox Header="Animation" Grid.Column="4">
+                <Grid  Margin="5,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100*"/>
+                        <ColumnDefinition Width="100*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="45*"/>
+                        <RowDefinition Height="45*"/>
+                    </Grid.RowDefinitions>
+                    <ComboBox Text="{Binding Emulator.CurrentAnimationClip.Name}" VerticalAlignment="Top" Grid.Column="0" Margin="5" Height="25" 
+                              IsEnabled="{Binding Emulator.AnimationClips,Converter={StaticResource SizeToBool }}"
+                              ItemsSource="{Binding Emulator.AnimationClips}" SelectedValue="{Binding Emulator.CurrentAnimationClip, UpdateSourceTrigger=PropertyChanged}"
+                              DisplayMemberPath="Key" SelectedValuePath="Value" Grid.ColumnSpan="2"/>
+
+                    <Button Grid.Column="0" Margin="5" Height="25" IsEnabled="{Binding Emulator.HasRecording}"
+                            Command="{Binding Emulator.RecordingToAnimationCommand}" VerticalAlignment="Top" Grid.Row="1">
+                        <Button.Content>
+                            <Grid>
+                                <Image Source="/Resources/Icons/Add.png" 
+                                       Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Convert" Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibilityInvert}}"/>
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <Button Grid.Column="1" Margin="5" Height="25" IsEnabled="{Binding Emulator.HasRecording}"
+                	    Command="{Binding Emulator.RemoveAnimationCommand}" VerticalAlignment="Top" Grid.Row="1">
+                        <Button.Content>
+                            <Grid>
+                                <Image Source="/Resources/Icons/Remove.png" 
+                                       Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Remove" Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibilityInvert}}"/>
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+                </Grid>
+                </GroupBox>
+                
+                <!--"Emulation Control"-->
+                <GroupBox Grid.Column="2" Header="Emulation">
+                <Grid Grid.Column="2" Margin="5,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100*"/>
+                        <ColumnDefinition Width="100*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="45*"/>
+                        <RowDefinition Height="45*"/>
+                    </Grid.RowDefinitions>
+                    
+                    <Button Grid.Row="0" Grid.Column="0" IsEnabled="{Binding Emulator.HasRecording}" Command="{Binding Emulator.StartEmulationCommand}" 
+            			    Margin="5" Height="26" VerticalAlignment="Top">
+                        <Button.Content>
+                            <Grid>
+                                <Image Source="/Resources/Icons/Play.png" 
+                                       Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Play" Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibilityInvert}}"/>
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <Button Grid.Row="0" Grid.Column="1" IsEnabled="{Binding Emulator.HasRecording}"  Command="{Binding Emulator.StopEmulationCommand}"
+            			    Margin="5" Height="26" VerticalAlignment="Top">
+                        <Button.Content>
+                            <Grid>
+                                <Image Source="/Resources/Icons/Stop.png" 
+                                       Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Stop" Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibilityInvert}}"/>
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+
+                    <TextBox Grid.Column="0" Text="{Binding Emulator.CurrentFrameIndex, StringFormat=\{0:0\}, UpdateSourceTrigger=PropertyChanged}" 
+            			    IsEnabled="true" Margin="5" Height="25" VerticalAlignment="Top" Grid.Row="1"/>
+
+                    <TextBox Grid.Column ="1" Text="{Binding Emulator.TotalFrames, Mode=OneWay}" 
+                             Height="25" Margin="5" IsEnabled="False" VerticalAlignment="Top" Grid.Row="1"/>
+
+                </Grid>
+                </GroupBox>
+                
+                <!--Frame Editing -->
+                <GroupBox Header="Editing" Grid.Column="0">
+                <Grid Grid.Column="0" Margin="5,0">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="100*"/>
+                        <ColumnDefinition Width="100*"/>
+                    </Grid.ColumnDefinitions>
+                    <Grid.RowDefinitions>
+                        <RowDefinition Height="45*"/>
+                        <RowDefinition Height="45*"/>
+                    </Grid.RowDefinitions>
+                    <Button Grid.Column="0" IsEnabled="{Binding Emulator.HasRecording}"
+                            Command="{Binding Emulator.RemoveFrameCommand}" VerticalAlignment="Top" Margin="5" Height="25">
+                        <Button.Content>
+                            <Grid>
+                                <Image Source="/Resources/Icons/RemoveSingle.png" 
+                                       Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Remove Frame" Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibilityInvert}}"/>
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+                    
+                    <Button Grid.Column="1" IsEnabled="{Binding Emulator.HasRecording}"
+                        Command="{Binding Emulator.CleanUpFramesCommand}" VerticalAlignment="Top" Margin="5" Grid.Row="0" Height="25">
+                        <Button.Content>
+                            <Grid>
+                                <Image Source="/Resources/Icons/RemoveBad.png" 
+                                       Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibility}}" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                                <TextBlock Text="Clean up Recording" Visibility="{Binding Main.UseImageForButtons, Converter={StaticResource BoolToVisibilityInvert}}"/>
+                            </Grid>
+                        </Button.Content>
+                    </Button>
+                </Grid>
+                </GroupBox>
+            </Grid>
+        </Grid>
+
+    </Grid>
+</UserControl>

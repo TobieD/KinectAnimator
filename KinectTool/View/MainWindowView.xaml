@@ -1,0 +1,66 @@
+﻿<Window
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        xmlns:view="clr-namespace:KinectTool.View"
+        x:Class="KinectTool.View.MainWindowView" 
+        Title="KinectTool" Height="475" Width="640" MinWidth="600" MinHeight="320" Closing="WindowClosing">
+
+    <Window.DataContext>
+        <Binding Source="{StaticResource Locator}" />
+    </Window.DataContext>
+
+    <!-- Key Bindings-->
+    <Window.InputBindings>
+        <KeyBinding Key="Z" Modifiers="Control" Command="{Binding Main.UndoCommand}"/>
+        <KeyBinding Key="X" Modifiers="Control" Command="{Binding Main.RedoCommand}"/>
+        <KeyBinding Key="A" Modifiers="Control" Command="{Binding Emulator.RecordingToAnimationCommand}"/>
+        <KeyBinding Key="S" Modifiers="Control" Command="{Binding Emulator.SaveModelCommand}"/>
+        <KeyBinding Key="O" Modifiers="Control" Command="{Binding Emulator.LoadModelCommand}"/>
+        <KeyBinding Key="O" Modifiers="Shift" Command="{Binding Emulator.OpenRecordingCommand}"/>
+        <KeyBinding Key="S" Modifiers="Shift" Command="{Binding Emulator.SaveRecordingCommand}"/>
+        <KeyBinding Key="W" Modifiers="Control" Command="{Binding Main.EnableExpertMode}"/>
+    </Window.InputBindings>
+
+    <Grid>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="25"/>
+            <RowDefinition Height="85*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Top Menu bar-->
+        <DockPanel>
+            <Menu DockPanel.Dock="Top" BorderBrush="Black" BorderThickness="0,0,0,1" Margin="0">
+                <!-- Open new or save current -->
+                <MenuItem Header="File">
+                    <MenuItem Header="Open Recorder" Command="{Binding Main.OpenRecordCommand}" />
+                    <!--UNDO/REDO-->
+                    <MenuItem Header="Undo" InputGestureText="Ctrl + Z" Command="{Binding Main.UndoCommand}" />
+                    <MenuItem Header="Redo" InputGestureText="Ctrl + X" Command="{Binding Main.RedoCommand}" />
+                </MenuItem>
+                <MenuItem Header="Recording" >
+                    <MenuItem Header="Open" InputGestureText="Shift + O" Command="{Binding Emulator.OpenRecordingCommand}"/>
+                    <MenuItem Header="Save" InputGestureText="Shift + S" Command="{Binding Emulator.SaveRecordingCommand}"/>
+                </MenuItem>
+                <!-- Open new or save current -->
+
+                <!-- Open new Model to view-->
+                <MenuItem Header="Model">
+                    <MenuItem Header="Open" InputGestureText="Ctrl + O" Command="{Binding Emulator.LoadModelCommand}"/>
+                    <MenuItem Header="Save" InputGestureText="Ctrl + S" Command="{Binding Emulator.SaveModelCommand}"/>
+                </MenuItem>
+
+                <MenuItem Header="Settings">
+                    <MenuItem Header="Expert Mode" InputGestureText="Ctrl + W" IsCheckable="True" IsChecked="{Binding Main.UseImageForButtons, Mode=TwoWay, UpdateSourceTrigger=PropertyChanged}"/>
+                </MenuItem>
+
+
+
+
+            </Menu>
+        </DockPanel>
+
+        <Grid MinWidth="475" MinHeight="300" Grid.Row="1">
+            <view:KinectEmulatorView Height="Auto" HorizontalAlignment="Stretch" VerticalAlignment="Stretch" Width="Auto" MinWidth="470" MinHeight="240"/>
+        </Grid>
+    </Grid>
+</Window>
